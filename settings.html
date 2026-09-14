@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RTLens Settings</title>
+  </head>
+  <body>
+    <main id="page">
+      <h1>RTLens</h1>
+
+      <section>
+        <h2>Trigger</h2>
+        <div class="row">
+          <label for="shortcut">Global shortcut</label>
+          <button type="button" id="shortcut" class="recorder">…</button>
+        </div>
+        <p class="note" id="shortcut-note">
+          Click, then press the combination. Registered with the system, so it cannot
+          swallow keys your terminal or tmux already uses.
+        </p>
+      </section>
+
+      <section>
+        <h2>Text handling</h2>
+        <label class="check"><input type="checkbox" id="softUnwrap" />
+          <span><strong>Rejoin wrapped lines</strong>
+          <em>Terminals break long Persian sentences mid-thought; this puts them back together.</em></span></label>
+        <label class="check"><input type="checkbox" id="normalizePersian" />
+          <span><strong>Normalise Persian</strong>
+          <em>Folds Arabic ي and ك onto Persian ی and ک so the font stops switching mid-word.</em></span></label>
+        <label class="check"><input type="checkbox" id="stripBackticks" />
+          <span><strong>Hide backticks</strong>
+          <em>Show inline code as a styled chip instead of literal backticks.</em></span></label>
+      </section>
+
+      <section>
+        <h2>Window</h2>
+        <label class="check"><input type="checkbox" id="dismissOnBlur" />
+          <span><strong>Close when it loses focus</strong></span></label>
+        <label class="check"><input type="checkbox" id="clipboardFallback" />
+          <span><strong>Fall back to the clipboard</strong>
+          <em>With nothing selected, show what is already on the clipboard, clearly labelled.</em></span></label>
+        <div class="row">
+          <label for="fontSize">Font size</label>
+          <input type="number" id="fontSize" min="10" max="28" step="1" />
+        </div>
+      </section>
+
+      <section>
+        <h2>Permissions</h2>
+        <div class="row">
+          <span id="ax-status">Checking…</span>
+          <button type="button" id="ax-open">Open settings…</button>
+        </div>
+      </section>
+
+      <p id="status" role="status"></p>
+    </main>
+    <script type="module" src="/src/settings.ts"></script>
+  </body>
+</html>

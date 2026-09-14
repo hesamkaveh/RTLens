@@ -1,0 +1,10 @@
+---
+source: crates/rtlens-core/tests/engine.rs
+expression: "rtlens_core :: render :: fragment(& doc(\"code_fence.txt\"))"
+---
+<div class="rtl-doc"><div class="rtl-line"><span class="rtl-content" dir="rtl">برای رفع مشکل این کد را اجرا کن:</span></div>
+<div class="rtl-line rtl-line--code"><span class="rtl-content" dir="ltr"><span class="rtl-code" dir="ltr">```rust</span></span></div>
+<div class="rtl-line rtl-line--code"><span class="rtl-content" dir="ltr"><span class="rtl-code" dir="ltr">let path = &quot;/src/main.rs&quot;; // مسیر فایل</span></span></div>
+<div class="rtl-line rtl-line--code"><span class="rtl-content" dir="ltr"><span class="rtl-code" dir="ltr">println!(&quot;{path}&quot;);</span></span></div>
+<div class="rtl-line rtl-line--code"><span class="rtl-content" dir="ltr"><span class="rtl-code" dir="ltr">```</span></span></div>
+<div class="rtl-line"><span class="rtl-content" dir="rtl">بعد از آن دوباره تست بگیر.</span></div></div>

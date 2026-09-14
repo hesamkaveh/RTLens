@@ -1,0 +1,158 @@
+/* RTLens layout primitives.
+ *
+ * These rules ARE the layout engine. RTLens does not reimplement bidi — it feeds the
+ * webview a structure the webview's own (HarfBuzz-backed) implementation can get right,
+ * which is the entire reason this is a webview app and not a native-toolkit one.
+ *
+ * This file is include_str!'d into rtlens-core's HTML renderer, so the offline test
+ * harness and the shipping HUD are always laid out by identical CSS.
+ */
+
+.rtl-doc {
+  /* Fill the available HUD width so text can anchor to its reading edge. Long lines still
+   * wrap because max-width caps it. */
+  width: 100%;
+  max-width: 100%;
+  --rtl-font-ui: "Vazirmatn", "SF Arabic", "Segoe UI", Tahoma, system-ui, sans-serif;
+  /* The trailing Persian faces are load-bearing: monospace fonts carry no Arabic glyphs,
+   * and without an explicit shaping-capable fallback the run renders as unjoined letters. */
+  --rtl-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas,
+                   "Vazirmatn", "SF Arabic", Tahoma, monospace;
+  font-family: var(--rtl-font-ui);
+  font-size: var(--rtl-size, 14px);
+  line-height: 1.9;
+  /* The container is physical, not directional: a frame is structure, not language. */
+  direction: ltr;
+  tab-size: 4;
+}
+
+.rtl-line {
+  display: flex;
+  align-items: flex-start;
+  direction: ltr;
+  min-height: 1.9em;
+}
+
+/* A list marker or indent belongs on the reading-start side, so it flips with the line.
+ * A box frame never does — hence this class is applied only to unboxed lines. */
+.rtl-line--rtl {
+  direction: rtl;
+}
+
+.rtl-gutter {
+  flex: 0 0 auto;
+  font-family: var(--rtl-font-mono);
+  white-space: pre;
+  color: var(--rtl-gutter, #7d8590);
+}
+
+.rtl-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  /* Each line is its own bidi paragraph: no line can reorder its neighbours. */
+  unicode-bidi: isolate;
+}
+
+.rtl-content[dir="rtl"] {
+  text-align: right;
+}
+
+.rtl-content[dir="ltr"] {
+  text-align: left;
+}
+
+/* The isolation that keeps a trailing period, bracket or slash from jumping across
+ * a direction boundary. `unicode-bidi: isolate` is what makes dir="ltr" authoritative
+ * here rather than merely advisory. */
+.rtl-code {
+  direction: ltr;
+  /* Never ligate: this is a reading tool, and `--flag` must look like two hyphens. */
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+  unicode-bidi: isolate;
+  font-family: var(--rtl-font-mono);
+  font-size: 0.92em;
+  padding: 0.05em 0.2em;
+  border-radius: 4px;
+  background: var(--rtl-code-bg, rgba(127, 137, 150, 0.16));
+  color: var(--rtl-code-fg, inherit);
+}
+
+/* A recovered table.
+ *
+ * The grid is what makes the columns line up without the engine measuring anything: the
+ * browser sizes each column to its content, which is the only correct answer once the text
+ * is proportional rather than the monospace grid the terminal painted.
+ *
+ * Rows are `display: contents` so their cells become items of the *table's* grid — a row
+ * box of its own would trap each row in its own column widths and defeat the alignment. */
+.rtl-table {
+  display: grid;
+  width: max-content;
+  max-width: 100%;
+  grid-template-columns: repeat(var(--rtl-cols, 2), minmax(0, auto));
+  /* Unlike a line, a table *does* follow the text: its direction is the order the columns
+   * run in, and a Persian table whose first column landed on the left would have had its
+   * columns reversed. The engine sets dir on this element, so nothing is forced here. */
+  align-items: start;
+  margin: 0.25em 0;
+}
+
+.rtl-row {
+  display: contents;
+}
+
+.rtl-cell {
+  min-width: 0;
+  padding: 0.12em 0.7em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  /* Each cell is its own bidi paragraph. This is the whole fix: a shared paragraph is
+   * what let a Persian cell reverse the Latin cell beside it. */
+  unicode-bidi: isolate;
+  border-top: 1px solid var(--rtl-rule, rgba(127, 137, 150, 0.22));
+}
+
+/* Alignment is a property of the column, not of the cell: a Persian header over Latin
+ * values still has to sit on the same edge as the values under it. */
+.rtl-cell--rtl {
+  text-align: right;
+}
+.rtl-cell--ltr {
+  text-align: left;
+}
+
+/* The top edge belongs to the frame, not between two rows. */
+.rtl-table > .rtl-row:first-child > .rtl-cell {
+  border-top: none;
+}
+
+.rtl-row--head > .rtl-cell {
+  font-weight: 600;
+  border-bottom: 1px solid var(--rtl-rule, rgba(127, 137, 150, 0.35));
+}
+
+/* Only when the capture actually drew a box do we draw one back. */
+.rtl-table--framed {
+  border: 1px solid var(--rtl-rule, rgba(127, 137, 150, 0.22));
+  border-radius: 6px;
+}
+
+/* Inside a fenced block the whole line is code; the inline chip styling would be noise. */
+.rtl-line--code .rtl-content {
+  font-family: var(--rtl-font-mono);
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+  font-size: 0.92em;
+}
+.rtl-line--code .rtl-code {
+  padding: 0;
+  background: none;
+  font-size: 1em;
+}
+
+.rtl-line--blank {
+  min-height: 0.95em;
+}

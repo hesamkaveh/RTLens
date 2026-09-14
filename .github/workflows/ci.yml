@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # The full gate contributors run locally (`pnpm check`), on the platform the
+  # app is developed on: tsc, workspace-wide clippy, rustfmt, engine tests.
+  check:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm check # tsc --noEmit && cargo clippy --workspace --all-targets -- -D warnings
+
+      - run: cargo fmt --all -- --check
+
+      - run: pnpm test # cargo test -p rtlens-core
+
+      - run: pnpm test:hud
+
+  # The engine is platform-independent; prove it on Linux too, where the
+  # src-tauri shell (and its macOS-only dependencies) is never built.
+  engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - run: cargo clippy -p rtlens-core --all-targets -- -D warnings
+
+      - run: cargo test -p rtlens-core

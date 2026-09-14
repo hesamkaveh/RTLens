@@ -1,0 +1,9 @@
+---
+source: crates/rtlens-core/tests/engine.rs
+expression: "rtlens_core :: render :: fragment(& doc(\"claude_box_persian.txt\"))"
+---
+<div class="rtl-doc"><div class="rtl-line"><span class="rtl-gutter">╭──────────────────────────────────────────────────────────╮</span><span class="rtl-content" dir="ltr"></span></div>
+<div class="rtl-line"><span class="rtl-gutter">│ </span><span class="rtl-content" dir="rtl">فایل <span class="rtl-code" dir="ltr">src/components/App.tsx</span> را با <span class="rtl-code" dir="ltr">--verbose</span> اجرا کن.</span><span class="rtl-gutter rtl-gutter--tail">      │</span></div>
+<div class="rtl-line"><span class="rtl-gutter">│ </span><span class="rtl-content" dir="rtl">نسخه <span class="rtl-code" dir="ltr">v1.2.3</span> در <span class="rtl-code" dir="ltr">package.json</span> ثبت شده است (مهم).</span><span class="rtl-gutter rtl-gutter--tail">           │</span></div>
+<div class="rtl-line"><span class="rtl-gutter">│ </span><span class="rtl-content" dir="ltr">Run <span class="rtl-code" dir="ltr">cargo test</span> before you commit <span class="rtl-code" dir="ltr">a1b2c3d4e5f6</span>.</span><span class="rtl-gutter rtl-gutter--tail">         │</span></div>
+<div class="rtl-line"><span class="rtl-gutter">╰──────────────────────────────────────────────────────────╯</span><span class="rtl-content" dir="ltr"></span></div></div>

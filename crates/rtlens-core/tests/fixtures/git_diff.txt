@@ -1,0 +1,7 @@
+diff --git a/src/main.rs b/src/main.rs
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -1,4 +1,4 @@
+-    // سلام دنیا
++    // درود بر جهان
+     println!("hi");

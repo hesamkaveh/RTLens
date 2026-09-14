@@ -1,0 +1,49 @@
+name: Broken layout
+description: RTLens rendered a capture wrong (frame in the wrong place, reversed line, mangled token)
+labels: ["layout"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The raw text matters more than anything else here — with it, the capture
+        becomes a fixture under `crates/rtlens-core/tests/fixtures` and the fix
+        gets a regression test for free.
+
+  - type: textarea
+    id: raw
+    attributes:
+      label: Raw capture
+      description: >
+        The text **before** RTLens touched it, copied straight from the terminal.
+        Paste it verbatim inside the code fence — do not retype or reformat it, and
+        do not paste a screenshot instead: the invisible characters are the bug.
+      value: |
+        ```
+        paste here
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What it should look like
+      description: Describe the correct layout, or paste it as text. A screenshot of the HUD helps too, since the failure is visual.
+    validations:
+      required: true
+
+  - type: input
+    id: terminal
+    attributes:
+      label: Terminal and OS
+      placeholder: Ghostty 1.2 on macOS 26.6 (arm64)
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: RTLens version
+      placeholder: 0.1.0, or the commit you built from
+    validations:
+      required: true

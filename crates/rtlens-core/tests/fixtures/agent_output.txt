@@ -1,0 +1,5 @@
+⏺ در حال خواندن فایل /Users/dev/code/rtlens-demos/README.md
+  ⎿  ۱۲۰ خط خوانده شد
+⏺ Bash(npm install --save-dev vite)
+  ⎿  added 42 packages in 3.1s
+⏺ خطا در ماژول src/lib/parser.ts رخ داد.

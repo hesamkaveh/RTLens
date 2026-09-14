@@ -1,0 +1,13 @@
+---
+source: crates/rtlens-core/tests/engine.rs
+expression: "rtlens_core :: render :: fragment(& doc(\"persian_report.txt\"))"
+---
+<div class="rtl-doc"><div class="rtl-line rtl-line--rtl"><span class="rtl-gutter">• </span><span class="rtl-content" dir="rtl">حدود ۴۵٪ پیش رفته است.</span></div>
+<div class="rtl-line rtl-line--blank"><span class="rtl-content" dir="ltr"></span></div>
+<div class="rtl-line rtl-line--rtl"><span class="rtl-gutter">  - </span><span class="rtl-content" dir="rtl">بررسی نسخه‌ها و ریسک migration: کامل</span></div>
+<div class="rtl-line rtl-line--rtl"><span class="rtl-gutter">  - </span><span class="rtl-content" dir="rtl">merge قابلیت‌های پنل <span class="rtl-code" dir="ltr">6.15.3</span> و حل conflictها در محیط جدا: کامل</span></div>
+<div class="rtl-line rtl-line--rtl"><span class="rtl-gutter">  - </span><span class="rtl-content" dir="rtl">نصب dependencyها و اجرای تست/build: در حال انجام</span></div>
+<div class="rtl-line rtl-line--rtl"><span class="rtl-gutter">  - </span><span class="rtl-content" dir="rtl">انتقال امن تغییرات به شاخه اصلی: باقی‌مانده</span></div>
+<div class="rtl-line rtl-line--rtl"><span class="rtl-gutter">  - </span><span class="rtl-content" dir="rtl">backup دیتابیس، ارتقای container و تست عملی بعد از migration: باقی‌مانده</span></div>
+<div class="rtl-line rtl-line--blank"><span class="rtl-content" dir="ltr"></span></div>
+<div class="rtl-line rtl-line--rtl"><span class="rtl-gutter">  </span><span class="rtl-content" dir="rtl">تا این لحظه سرویس اصلی و دیتابیس دست‌کاری نشده‌اند.</span></div></div>

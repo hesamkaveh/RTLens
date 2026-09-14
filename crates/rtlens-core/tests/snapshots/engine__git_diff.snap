@@ -1,0 +1,11 @@
+---
+source: crates/rtlens-core/tests/engine.rs
+expression: "rtlens_core :: render :: fragment(& doc(\"git_diff.txt\"))"
+---
+<div class="rtl-doc"><div class="rtl-line"><span class="rtl-content" dir="ltr"><span class="rtl-code" dir="ltr">diff --git a/src/main.rs b/src/main.rs</span></span></div>
+<div class="rtl-line"><span class="rtl-content" dir="ltr"><span class="rtl-code" dir="ltr">--- a/src/main.rs</span></span></div>
+<div class="rtl-line"><span class="rtl-content" dir="ltr"><span class="rtl-code" dir="ltr">+++ b/src/main.rs</span></span></div>
+<div class="rtl-line"><span class="rtl-content" dir="ltr"><span class="rtl-code" dir="ltr">@@ -1,4 +1,4 @@</span></span></div>
+<div class="rtl-line"><span class="rtl-gutter">-    </span><span class="rtl-content" dir="ltr"><span class="rtl-code" dir="ltr">// سلام دنیا</span></span></div>
+<div class="rtl-line"><span class="rtl-gutter">+    </span><span class="rtl-content" dir="ltr"><span class="rtl-code" dir="ltr">// درود بر جهان</span></span></div>
+<div class="rtl-line"><span class="rtl-gutter">     </span><span class="rtl-content" dir="ltr"><span class="rtl-code" dir="ltr">println!(&quot;hi&quot;);</span></span></div></div>

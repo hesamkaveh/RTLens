@@ -1,0 +1,8 @@
+---
+source: crates/rtlens-core/tests/engine.rs
+expression: "rtlens_core :: render :: fragment(& doc(\"ansi_progress.txt\"))"
+---
+<div class="rtl-doc"><div class="rtl-line rtl-line--rtl"><span class="rtl-gutter">✓ </span><span class="rtl-content" dir="rtl">ساخت پروژه آغاز شد</span></div>
+<div class="rtl-line rtl-line--rtl"><span class="rtl-gutter"> </span><span class="rtl-content" dir="rtl">100% تکمیل شد</span></div>
+<div class="rtl-line"><span class="rtl-content" dir="rtl">خطا: فایل <span class="rtl-code" dir="ltr">/etc/config.toml</span> یافت نشد.</span></div>
+<div class="rtl-line"><span class="rtl-content" dir="ltr">see مستندات for more</span></div></div>

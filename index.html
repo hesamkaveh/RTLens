@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RTLens</title>
+  </head>
+  <body>
+    <div id="shell" data-tauri-drag-region="deep">
+      <button
+        id="close"
+        type="button"
+        data-tauri-drag-region="false"
+        aria-label="Close popup"
+        title="Close"
+      ></button>
+      <div
+        id="drag-handle"
+        data-tauri-drag-region="true"
+        aria-hidden="true"
+        title="Drag to move"
+      ></div>
+      <main id="doc" class="rtl-doc"></main>
+
+      <div id="empty" hidden>
+        <p id="empty-title">No selection detected</p>
+        <p id="empty-hint">Select some text, then press the RTLens shortcut.</p>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

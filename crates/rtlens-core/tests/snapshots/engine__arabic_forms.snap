@@ -1,0 +1,7 @@
+---
+source: crates/rtlens-core/tests/engine.rs
+expression: "rtlens_core :: render :: fragment(& doc(\"arabic_forms.txt\"))"
+---
+<div class="rtl-doc"><div class="rtl-line"><span class="rtl-content" dir="rtl">کیفیت النص</span></div>
+<div class="rtl-line"><span class="rtl-content" dir="rtl">لا و ی</span></div>
+<div class="rtl-line"><span class="rtl-content" dir="rtl">متن با کنترل اضافی</span></div></div>

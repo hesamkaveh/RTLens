@@ -1,0 +1,9 @@
+---
+source: crates/rtlens-core/tests/engine.rs
+expression: "rtlens_core :: render :: fragment(& doc(\"agent_output.txt\"))"
+---
+<div class="rtl-doc"><div class="rtl-line rtl-line--rtl"><span class="rtl-gutter">⏺ </span><span class="rtl-content" dir="rtl">در حال خواندن فایل <span class="rtl-code" dir="ltr">/Users/dev/code/rtlens-demos/README.md</span></span></div>
+<div class="rtl-line rtl-line--rtl"><span class="rtl-gutter">  ⎿  </span><span class="rtl-content" dir="rtl">۱۲۰ خط خوانده شد</span></div>
+<div class="rtl-line"><span class="rtl-gutter">⏺ </span><span class="rtl-content" dir="ltr">Bash(npm install <span class="rtl-code" dir="ltr">--save-dev</span> vite)</span></div>
+<div class="rtl-line"><span class="rtl-gutter">  ⎿  </span><span class="rtl-content" dir="ltr">added 42 packages in <span class="rtl-code" dir="ltr">3.1</span>s</span></div>
+<div class="rtl-line rtl-line--rtl"><span class="rtl-gutter">⏺ </span><span class="rtl-content" dir="rtl">خطا در ماژول <span class="rtl-code" dir="ltr">src/lib/parser.ts</span> رخ داد.</span></div></div>

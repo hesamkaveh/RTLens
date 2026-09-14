@@ -1,0 +1,28 @@
+version: 2
+
+updates:
+  # Cargo is grouped into one PR because the workspace pins a single Tauri
+  # major: bumping tauri without its plugins produces a lockfile that resolves
+  # but an app that does not build.
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      rust:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      node:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

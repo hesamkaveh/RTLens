@@ -1,0 +1,9 @@
+# The codebase is written in a compact style: one-liner struct literals, match
+# arms and asserts stay inline. `Max` heuristics + a wider line budget make
+# `cargo fmt` reproduce it instead of exploding every literal to four lines.
+use_small_heuristics = "Max"
+max_width = 110
+
+# Keep cfg-grouped `pub mod` declarations in their written order (macos first
+# as the primary platform) instead of alphabetical.
+reorder_modules = false

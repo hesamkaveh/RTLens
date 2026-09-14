@@ -1,0 +1,47 @@
+name: Bug
+description: Something other than layout — capture, hotkey, tray, window, build
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: input
+    id: platform
+    attributes:
+      label: OS and version
+      placeholder: macOS 26.6 (arm64)
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: RTLens version
+      placeholder: 0.1.0, or the commit you built from
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: >
+        Run the binary from a terminal with `RUST_LOG=debug` and paste anything
+        relevant. Redact captured text you would rather not share.
+      render: shell
