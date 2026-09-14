@@ -60,6 +60,7 @@ jobs:
           printf '%s' "$APPLE_CERTIFICATE" | base64 --decode > "$certificate_path"
           openssl pkcs12 \
             -in "$certificate_path" \
+            -legacy \
             -clcerts \
             -nokeys \
             -passin env:APPLE_CERTIFICATE_PASSWORD \
