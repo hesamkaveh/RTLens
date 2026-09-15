@@ -106,8 +106,19 @@ pub fn frontmost_app() -> Option<String> {
 ///
 /// On macOS this is unambiguously "copy" in every terminal, so unlike Ctrl+C on Windows
 /// and Linux there is no risk of the keystroke being interpreted as an interrupt.
+///
+/// We use `CGEventSourceStateID::Private` and `CGEventTapLocation::Session` so that any
+/// physical modifier keys the user is still depressing when triggering the global hotkey
+/// (e.g. Control, Shift, Option) are not merged into the synthetic ⌘C keystroke.
 fn send_copy() -> bool {
-    let Ok(source) = CGEventSource::new(CGEventSourceStateID::CombinedSessionState) else {
+    // Brief settle time so the OS finishes processing the hotkey press event before
+    // synthetic input is injected.
+    std::thread::sleep(Duration::from_millis(25));
+
+    let Ok(source) = CGEventSource::new(CGEventSourceStateID::Private)
+        .or_else(|_| CGEventSource::new(CGEventSourceStateID::HIDSystemState))
+        .or_else(|_| CGEventSource::new(CGEventSourceStateID::CombinedSessionState))
+    else {
         tracing::error!("could not create a CGEventSource");
         return false;
     };
@@ -120,9 +131,10 @@ fn send_copy() -> bool {
     };
     down.set_flags(CGEventFlags::CGEventFlagCommand);
     up.set_flags(CGEventFlags::CGEventFlagCommand);
-    down.post(CGEventTapLocation::HID);
-    std::thread::sleep(Duration::from_millis(8));
-    up.post(CGEventTapLocation::HID);
+
+    down.post(CGEventTapLocation::Session);
+    std::thread::sleep(Duration::from_millis(25));
+    up.post(CGEventTapLocation::Session);
     true
 }
 
@@ -192,5 +204,28 @@ impl Capturer for MacCapturer {
 
     fn can_synthesize(&self) -> bool {
         accessibility_trusted()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn event_source_and_copy_events_construct_without_error() {
+        let source = CGEventSource::new(CGEventSourceStateID::Private)
+            .or_else(|_| CGEventSource::new(CGEventSourceStateID::HIDSystemState))
+            .or_else(|_| CGEventSource::new(CGEventSourceStateID::CombinedSessionState))
+            .expect("should create CGEventSource");
+
+        let down =
+            CGEvent::new_keyboard_event(source.clone(), KEY_C, true).expect("down event should construct");
+        let up = CGEvent::new_keyboard_event(source, KEY_C, false).expect("up event should construct");
+
+        down.set_flags(CGEventFlags::CGEventFlagCommand);
+        up.set_flags(CGEventFlags::CGEventFlagCommand);
+
+        assert!(down.get_flags().contains(CGEventFlags::CGEventFlagCommand));
+        assert!(up.get_flags().contains(CGEventFlags::CGEventFlagCommand));
     }
 }
