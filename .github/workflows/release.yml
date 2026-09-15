@@ -74,11 +74,9 @@ jobs:
             -P "$APPLE_CERTIFICATE_PASSWORD" \
             -T /usr/bin/codesign \
             -T /usr/bin/security
-          security set-key-partition-list \
-            -S apple-tool:,apple:,codesign: \
-            -s \
-            -k "$KEYCHAIN_PASSWORD" \
-            "$keychain_path"
+          # The `-T /usr/bin/codesign` import option above grants codesign
+          # access to the private key. Avoid set-key-partition-list: it can
+          # stall indefinitely on GitHub's temporary runner keychain.
 
           # Local development certificates are self-signed. Trust only this
           # temporary runner keychain so codesign accepts the identity.
