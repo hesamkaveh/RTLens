@@ -22,7 +22,12 @@ const docEl = el("doc");
 const empty = el("empty");
 const emptyTitle = el("empty-title");
 const emptyHint = el("empty-hint");
+const emptyAction = el<HTMLButtonElement>("empty-action");
 const close = el<HTMLButtonElement>("close");
+
+emptyAction.addEventListener("click", () => {
+  void invoke("open_accessibility_settings");
+});
 
 /**
  * #doc's 12px top and bottom padding, plus #shell's 0.5px border on each edge,
@@ -32,6 +37,17 @@ const DOC_PADDING = 26;
 
 /** Longest we will wait on webfonts before sizing the window anyway. */
 const FONT_DEADLINE = 80;
+
+function measureContentHeight(): number {
+  if (!empty.hidden) {
+    return Math.max(empty.offsetHeight, 100);
+  }
+  let content = 0;
+  for (const child of Array.from(docEl.children)) {
+    content += (child as HTMLElement).offsetHeight;
+  }
+  return content;
+}
 
 /**
  * Measure the rendered content and ask Rust to size and reveal the window.
@@ -47,18 +63,7 @@ async function present(): Promise<void> {
     document.fonts.ready.catch(() => undefined),
     new Promise((resolve) => setTimeout(resolve, FONT_DEADLINE)),
   ]);
-  // Deliberately not requestAnimationFrame: the window is still hidden at this point and
-  // a hidden window never runs rAF callbacks, so the measurement would never happen and
-  // the HUD would only ever appear via the Rust-side fallback timer.
-  //
-  // Summing the line boxes rather than reading scrollHeight, because #doc is a flex child
-  // that stretches to fill the old window height — scrollHeight would report the stale box,
-  // not the content.
-  let content = 0;
-  for (const child of Array.from(docEl.children)) {
-    content += (child as HTMLElement).offsetHeight;
-  }
-  const height = content + DOC_PADDING;
+  const height = measureContentHeight() + DOC_PADDING;
   void invoke("hud_ready", { height });
   remeasureWhenFontsLoad(height);
 }
@@ -70,11 +75,7 @@ async function present(): Promise<void> {
 function remeasureWhenFontsLoad(previous: number): void {
   void document.fonts.ready
     .then(() => {
-      let content = 0;
-      for (const child of Array.from(docEl.children)) {
-        content += (child as HTMLElement).offsetHeight;
-      }
-      const height = content + DOC_PADDING;
+      const height = measureContentHeight() + DOC_PADDING;
       if (Math.abs(height - previous) > 4) void invoke("hud_ready", { height });
     })
     .catch(() => undefined);
@@ -87,18 +88,24 @@ function showDocument(payload: DocPayload): void {
     line.segments.some((segment) => segment.text.trim() !== "")
   );
 
-  if (!hasContent) {
+  if (!payload.canCapture) {
     docEl.replaceChildren();
     empty.hidden = false;
-    const blocked = !payload.canCapture;
-    emptyTitle.textContent = blocked
-      ? "RTLens needs Accessibility access"
-      : "No selection detected";
-    emptyHint.textContent = blocked
-      ? "Without it RTLens cannot ask the focused app to copy, so there is nothing to read."
-      : "Select some text, then press the RTLens shortcut.";
+    emptyAction.hidden = false;
+    emptyTitle.textContent = "Accessibility access required";
+    emptyHint.textContent =
+      "RTLens needs Accessibility access to copy your selected text from terminals and apps (via ⌘C). No keystrokes are recorded or stored.";
+    emptyAction.textContent = "Grant Permission…";
+    void invoke("request_accessibility_permission");
+  } else if (!hasContent) {
+    docEl.replaceChildren();
+    empty.hidden = false;
+    emptyAction.hidden = true;
+    emptyTitle.textContent = "No selection detected";
+    emptyHint.textContent = "Select some text, then press the RTLens shortcut.";
   } else {
     empty.hidden = true;
+    emptyAction.hidden = true;
     renderDoc(docEl, payload.doc);
   }
 

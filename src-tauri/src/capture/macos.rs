@@ -25,12 +25,22 @@ const SETTLE: Duration = Duration::from_millis(30);
 #[link(name = "ApplicationServices", kind = "framework")]
 extern "C" {
     fn AXIsProcessTrusted() -> bool;
+    fn AXIsProcessTrustedWithOptions(options: *const std::ffi::c_void) -> bool;
 }
 
 /// True when this process may synthesise keyboard events (System Settings → Privacy &
 /// Security → Accessibility).
 pub fn accessibility_trusted() -> bool {
     unsafe { AXIsProcessTrusted() }
+}
+
+/// Request accessibility permissions from macOS, presenting the system prompt if not yet trusted.
+pub fn request_accessibility_permission() -> bool {
+    let key = NSString::from_str("AXTrustedCheckOptionPrompt");
+    let val = objc2_foundation::NSNumber::new_bool(true);
+    let dict = objc2_foundation::NSDictionary::from_slices(&[&*key], &[&*val]);
+    let dict_ptr = objc2::rc::Retained::as_ptr(&dict) as *const std::ffi::c_void;
+    unsafe { AXIsProcessTrustedWithOptions(dict_ptr) }
 }
 
 /// Every type currently on the pasteboard, with its raw bytes.
@@ -144,9 +154,10 @@ impl Capturer for MacCapturer {
     fn capture(&self, budget: Duration, clipboard_fallback: bool) -> Captured {
         let app = frontmost_app();
 
-        // Without Accessibility we cannot synthesise anything; say so rather than
-        // presenting whatever happens to be on the clipboard as if it were a selection.
+        // Without Accessibility we cannot synthesise anything; prompt for permission and
+        // say so rather than presenting whatever happens to be on the clipboard as if it were a selection.
         if !accessibility_trusted() {
+            request_accessibility_permission();
             let text = read_text();
             return Captured {
                 source: if text.is_empty() || !clipboard_fallback {

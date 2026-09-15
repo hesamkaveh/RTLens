@@ -183,6 +183,32 @@ html, body {
 }
 #empty-title { margin: 0; font-size: 13px; font-weight: 600; }
 #empty-hint { margin: 0; font-size: 12px; color: var(--muted); max-width: 34ch; line-height: 1.5; }
+#empty-action {
+  margin-top: 6px;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: #0a84ff;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: opacity 120ms ease, transform 120ms ease, filter 120ms ease;
+}
+#empty-action:hover {
+  opacity: 0.92;
+  transform: scale(1.02);
+}
+#empty-action:active {
+  filter: brightness(0.9);
+  transform: scale(0.98);
+}
+#empty-action:focus-visible {
+  outline: 2px solid #0a84ff;
+  outline-offset: 2px;
+}
 #doc::-webkit-scrollbar { width: 8px; }
 #doc::-webkit-scrollbar-thumb {
   background: var(--rtl-gutter);

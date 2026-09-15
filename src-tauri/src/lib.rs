@@ -172,6 +172,7 @@ fn accessibility_status() -> bool {
 fn open_accessibility_settings<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
+        capture::macos::request_accessibility_permission();
         use tauri_plugin_opener::OpenerExt;
         app.opener()
             .open_url(
@@ -184,6 +185,18 @@ fn open_accessibility_settings<R: Runtime>(app: AppHandle<R>) -> Result<(), Stri
     {
         let _ = app;
         Ok(())
+    }
+}
+
+#[tauri::command]
+fn request_accessibility_permission() -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        capture::macos::request_accessibility_permission()
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        true
     }
 }
 
@@ -217,6 +230,7 @@ pub fn run() {
             save_settings,
             set_engine,
             accessibility_status,
+            request_accessibility_permission,
             open_accessibility_settings,
         ])
         .setup(|app| {
