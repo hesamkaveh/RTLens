@@ -95,7 +95,9 @@ jobs:
           existing_keychains="$(security list-keychains -d user | tr -d '\"')"
           # shellcheck disable=SC2086
           security list-keychains -d user -s "$keychain_path" $existing_keychains
-          security find-identity -v -p codesigning "$keychain_path"
+          # `security import` above fails when the identity cannot be added.
+          # Do not enumerate identities here: this can block indefinitely on
+          # GitHub's temporary runner keychain after a successful import.
 
       # Via the Tauri CLI, never bare `cargo build --release`: the CLI is what
       # tells tauri-build this is a production build, and without it every
