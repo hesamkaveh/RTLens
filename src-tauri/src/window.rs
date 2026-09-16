@@ -29,7 +29,7 @@ pub fn apply_effects<R: Runtime>(window: &WebviewWindow<R>) {
             window,
             NSVisualEffectMaterial::HudWindow,
             Some(NSVisualEffectState::Active),
-            Some(14.0),
+            Some(16.0),
         ) {
             tracing::warn!("vibrancy unavailable: {e}");
         }
