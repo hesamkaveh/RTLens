@@ -24,29 +24,56 @@ const emptyTitle = el("empty-title");
 const emptyHint = el("empty-hint");
 const emptyAction = el<HTMLButtonElement>("empty-action");
 const close = el<HTMLButtonElement>("close");
+const hudHeader = el("hud-header");
+const copyBtn = el<HTMLButtonElement>("copy-btn");
+const copyLabel = el<HTMLSpanElement>("copy-label");
+
+let copyTimeout: number | undefined;
+
+async function copyDocumentText(): Promise<void> {
+  const text = docEl.innerText.trim();
+  if (!text) return;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    copyBtn.classList.add("copied");
+    if (copyLabel) copyLabel.textContent = "کپی شد";
+    if (copyTimeout) window.clearTimeout(copyTimeout);
+    copyTimeout = window.setTimeout(() => {
+      copyBtn.classList.remove("copied");
+      if (copyLabel) copyLabel.textContent = "کپی";
+    }, 1500);
+  } catch (err) {
+    console.error("Failed to copy text:", err);
+  }
+}
+
+copyBtn.addEventListener("click", () => {
+  void copyDocumentText();
+});
 
 emptyAction.addEventListener("click", () => {
   void invoke("open_accessibility_settings");
 });
 
 /**
- * #doc's 12px top and bottom padding, plus #shell's 0.5px border on each edge,
- * rounded up so sizing never lands the content one pixel into a scrollbar.
+ * Header height (34px) + #doc padding (4px top + 22px bottom) + #shell border (2px)
+ * + 8px safety headroom so sizing never lands content into a scrollbar or clips descenders.
  */
-const DOC_PADDING = 26;
+const DOC_PADDING = 70;
 
 /** Longest we will wait on webfonts before sizing the window anyway. */
 const FONT_DEADLINE = 80;
 
 function measureContentHeight(): number {
   if (!empty.hidden) {
-    return Math.max(empty.offsetHeight, 100);
+    return Math.max(empty.offsetHeight, 120);
   }
   let content = 0;
   for (const child of Array.from(docEl.children)) {
-    content += (child as HTMLElement).offsetHeight;
+    content += (child as HTMLElement).getBoundingClientRect().height;
   }
-  return content;
+  return Math.ceil(content);
 }
 
 /**
@@ -92,6 +119,7 @@ function showDocument(payload: DocPayload): void {
     docEl.replaceChildren();
     empty.hidden = false;
     emptyAction.hidden = false;
+    hudHeader.hidden = true;
     emptyTitle.textContent = "Accessibility access required";
     emptyHint.textContent =
       "RTLens needs Accessibility access to copy your selected text from terminals and apps (via ⌘C). No keystrokes are recorded or stored.";
@@ -101,11 +129,13 @@ function showDocument(payload: DocPayload): void {
     docEl.replaceChildren();
     empty.hidden = false;
     emptyAction.hidden = true;
+    hudHeader.hidden = true;
     emptyTitle.textContent = "No selection detected";
     emptyHint.textContent = "Select some text, then press the RTLens shortcut.";
   } else {
     empty.hidden = true;
     emptyAction.hidden = true;
+    hudHeader.hidden = false;
     renderDoc(docEl, payload.doc);
   }
 
@@ -116,6 +146,12 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     event.preventDefault();
     void invoke("hide_hud");
+  } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "c") {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || selection.toString().trim() === "") {
+      event.preventDefault();
+      void copyDocumentText();
+    }
   }
 });
 
