@@ -32,6 +32,7 @@ arboard = "3.6.1"
 window-vibrancy = "0.8.0"
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+tungstenite = { version = "0.30.0", default-features = false, features = ["handshake"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics = "0.25.0"

@@ -1,5 +1,6 @@
 //! RTLens application shell: trigger, capture, analyse, present.
 
+mod antigravity;
 mod capture;
 mod config;
 mod hotkey;
@@ -124,6 +125,7 @@ fn save_settings<R: Runtime>(app: AppHandle<R>, settings: Settings) -> Result<Se
     }
 
     config::save(&app, &settings)?;
+    app.state::<antigravity::Antigravity>().set_enabled(settings.antigravity_rtl);
     *app.state::<RtState>().settings.lock().expect("settings lock") = settings.clone();
     broadcast_settings(&app, &settings);
     Ok(settings)
@@ -153,6 +155,11 @@ fn set_engine<R: Runtime>(app: AppHandle<R>, engine: Options) -> Result<Doc, Str
     broadcast_settings(&app, &snapshot);
 
     Ok(doc)
+}
+
+#[tauri::command]
+fn antigravity_status<R: Runtime>(app: AppHandle<R>) -> antigravity::Status {
+    app.state::<antigravity::Antigravity>().status()
 }
 
 #[tauri::command]
@@ -229,6 +236,7 @@ pub fn run() {
             get_settings,
             save_settings,
             set_engine,
+            antigravity_status,
             accessibility_status,
             request_accessibility_permission,
             open_accessibility_settings,
@@ -242,6 +250,7 @@ pub fn run() {
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
             let settings = config::load(&handle);
+            app.manage(antigravity::Antigravity::start(settings.antigravity_rtl));
             app.manage(RtState {
                 last_raw: Mutex::new(String::new()),
                 last_doc: Mutex::new(None),

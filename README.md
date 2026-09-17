@@ -109,6 +109,20 @@ restoring.
 > kill whatever the user is running. Under X11 the primary selection is read directly, so
 > no synthetic input happens at all.
 
+### Antigravity (experimental)
+
+Turn on **Settings → Integrations → RTL in Antigravity** to lay out Persian and Arabic
+correctly in the Antigravity app's agent chat, sidebar and prompt box. RTLens attaches to
+Antigravity's windows through the Chrome DevTools Protocol and keeps working across
+reloads and restarts for as long as RTLens is running. Antigravity must have remote
+debugging enabled, and while that port is open **any local process can control the app**
+— only turn it on on a machine you trust.
+
+For development without the app, `pnpm antigravity` injects the same script
+(`integrations/antigravity/client.cjs`) once and `pnpm antigravity:watch` stays attached.
+`pnpm antigravity:install` runs that watcher at login as a launchd agent (remove it with
+`pnpm antigravity:uninstall`); don't combine it with the app setting.
+
 ## Build
 
 Requires Rust (stable), Node 20.19+ or 22.12+, and pnpm.

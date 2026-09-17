@@ -15,6 +15,13 @@ type Settings = {
   dismissOnBlur: boolean;
   clipboardFallback: boolean;
   fontSize: number;
+  antigravityRtl: boolean;
+};
+
+type AntigravityStatus = {
+  enabled: boolean;
+  attached: number;
+  error: string | null;
 };
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -22,6 +29,7 @@ const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as
 const shortcutButton = el<HTMLButtonElement>("shortcut");
 const status = el("status");
 const axStatus = el("ax-status");
+const antigravityStatus = el("antigravity-status");
 
 let settings: Settings;
 let recording = false;
@@ -102,6 +110,7 @@ bindCheck("normalizePersian", true);
 bindCheck("stripBackticks", true);
 bindCheck("dismissOnBlur", false);
 bindCheck("clipboardFallback", false);
+bindCheck("antigravityRtl", false);
 
 el<HTMLInputElement>("fontSize").addEventListener("change", (event) => {
   const value = Number((event.target as HTMLInputElement).value);
@@ -118,6 +127,8 @@ function render(): void {
   el<HTMLInputElement>("dismissOnBlur").checked = settings.dismissOnBlur;
   el<HTMLInputElement>("clipboardFallback").checked = settings.clipboardFallback;
   el<HTMLInputElement>("fontSize").value = String(settings.fontSize);
+  el<HTMLInputElement>("antigravityRtl").checked = settings.antigravityRtl;
+  void refreshAntigravity();
 }
 
 /// Permission can be granted while this window is open, so re-check whenever the user
@@ -128,6 +139,23 @@ async function refreshAccessibility(): Promise<void> {
     ? "Accessibility access granted"
     : "Accessibility access is required to capture a selection";
   axStatus.classList.toggle("warn", !trusted);
+}
+
+/// The watcher runs in Rust; this only mirrors what it is doing so a missing debug port
+/// is visible instead of the toggle silently doing nothing.
+async function refreshAntigravity(): Promise<void> {
+  const state = await invoke<AntigravityStatus>("antigravity_status");
+  antigravityStatus.hidden = !state.enabled;
+  if (!state.enabled) return;
+  if (state.error) {
+    antigravityStatus.textContent = state.error;
+  } else if (state.attached > 0) {
+    const windows = state.attached === 1 ? "window" : "windows";
+    antigravityStatus.textContent = `Active in ${state.attached} Antigravity ${windows}`;
+  } else {
+    antigravityStatus.textContent = "Waiting for Antigravity…";
+  }
+  antigravityStatus.classList.toggle("warn", Boolean(state.error));
 }
 
 async function init(): Promise<void> {
@@ -141,6 +169,9 @@ async function init(): Promise<void> {
     if (!recording) render();
   });
   window.addEventListener("focus", () => void refreshAccessibility());
+  setInterval(() => {
+    if (document.visibilityState === "visible") void refreshAntigravity();
+  }, 2000);
 }
 
 void init();

@@ -26,6 +26,8 @@ pub struct Settings {
     /// When no selection is detected, show the current clipboard instead of an empty state.
     pub clipboard_fallback: bool,
     pub font_size: u32,
+    /// Inject RTL support into Antigravity's windows over its DevTools port.
+    pub antigravity_rtl: bool,
 }
 
 impl Default for Settings {
@@ -36,6 +38,7 @@ impl Default for Settings {
             dismiss_on_blur: true,
             clipboard_fallback: true,
             font_size: 14,
+            antigravity_rtl: false,
         }
     }
 }
