@@ -23,3 +23,8 @@ src-tauri/gen/schemas/
 # distilled into crates/rtlens-core/tests/fixtures instead — raw captures are
 # usually somebody's actual terminal output and do not belong in the repo.
 corpus/
+
+graphify-out
+
+# Agent configuration and rules
+.agents/
