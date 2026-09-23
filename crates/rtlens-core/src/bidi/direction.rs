@@ -59,7 +59,11 @@ pub fn count_runs(s: &str) -> (usize, usize) {
                     current = Some(dir);
                 }
             }
-            None => current = None,
+            None => {
+                if c != '_' {
+                    current = None;
+                }
+            }
         }
     }
     (ltr, rtl)
@@ -150,6 +154,12 @@ mod tests {
     fn a_latin_path_does_not_drag_a_persian_line_ltr() {
         // Majority-Latin by character count, unmistakably Persian by word.
         assert_eq!(resolve("فایل src/components/App.tsx را با --verbose اجرا کن.", rtl_ctx()), Dir::Rtl);
+    }
+
+    #[test]
+    fn snake_case_identifiers_and_env_vars_do_not_drag_persian_line_ltr() {
+        let line = "ریپو را فعال کن و چهار secret به نامهای dockhand_stg_webhook_url، dockhand_stg_webhook_secret، dockhand_prod_webhook_url و dockhand_prod_webhook_secret را تنظیم کن.";
+        assert_eq!(resolve(line, rtl_ctx()), Dir::Rtl);
     }
 
     #[test]

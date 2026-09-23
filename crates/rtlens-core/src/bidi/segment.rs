@@ -21,10 +21,16 @@ static CODE_RE: Lazy<Regex> = Lazy::new(|| {
         r"|(?:~|\.{1,2})?/[A-Za-z0-9._@+-]+(?:/[A-Za-z0-9._@+-]*)*",
         r"|[A-Za-z0-9._@+-]+(?:/[A-Za-z0-9._@+-]+)+",
         r"|--?[A-Za-z][A-Za-z0-9-]*(?:=[^\s]+)?",
-        // A settings key carries its value: `report.maxPositions=50000` is one token, and
-        // splitting it strands the digits as neutrals that resolve against the paragraph —
-        // which is how `=50000` ends up rendering on the wrong side, or in pieces.
-        r"|[A-Za-z_][A-Za-z0-9_]*(?:(?:::|\.|->)[A-Za-z_][A-Za-z0-9_]*)+(?:\(\))?(?:=[A-Za-z0-9._/+-]+)?",
+        // Environment variables and key-value assignments (e.g. `PLATFORM_ENV=stg`, `report.maxPositions=50000`).
+        r"|[A-Za-z_][A-Za-z0-9_]*(?:(?:::|\.|->)[A-Za-z_][A-Za-z0-9_]*)*(?:\(\))?=[A-Za-z0-9._/+-]+",
+        // Scoped identifiers and method calls (e.g. `foo::bar`, `std::collections::HashMap`, `obj->method()`).
+        r"|[A-Za-z_][A-Za-z0-9_]*(?:(?:::|\.|->)[A-Za-z_][A-Za-z0-9_]*)+(?:\(\))?",
+        // Filenames with extensions, including hyphens (e.g. `docker-compose.yml`, `package.json`).
+        r"|[A-Za-z_][A-Za-z0-9_-]*(?:\.[A-Za-z0-9_-]+)+",
+        // Snake_case and uppercase identifiers (e.g. `dockhand_stg_webhook_url`, `MAX_RETRIES`).
+        r"|_*[A-Za-z0-9]+(?:_+[A-Za-z0-9]+)+_*|__[A-Za-z0-9]+__",
+        // Email addresses (e.g. `admin@local.c`, `user@example.com`).
+        r"|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z0-9]+",
         r"|v?[0-9]+\.[0-9]+(?:\.[0-9]+)?(?:[-+][A-Za-z0-9.]+)?",
         r"|[0-9a-f]{7,40}",
         r"|\[[\x21-\x7E][\x20-\x7E]*\]",
@@ -248,7 +254,11 @@ mod tests {
     fn versions_and_identifiers() {
         assert_eq!(codes("نسخه v1.2.3 منتشر شد"), vec!["v1.2.3"]);
         assert_eq!(codes("فایل package.json را باز کن"), vec!["package.json"]);
+        assert_eq!(codes("فایل docker-compose.yml را باز کن"), vec!["docker-compose.yml"]);
         assert_eq!(codes("تابع foo::bar را صدا بزن"), vec!["foo::bar"]);
+        assert_eq!(codes("متغیر dockhand_stg_webhook_url را تنظیم کن"), vec!["dockhand_stg_webhook_url"]);
+        assert_eq!(codes("مقدار PLATFORM_ENV=production است"), vec!["PLATFORM_ENV=production"]);
+        assert_eq!(codes("کاربر admin@local.c را بساز"), vec!["admin@local.c"]);
     }
 
     #[test]

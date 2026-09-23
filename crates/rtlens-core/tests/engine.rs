@@ -221,3 +221,22 @@ fn persian_lines_opening_with_a_latin_term_resolve_rtl() {
         assert_eq!(line.dir, Dir::Rtl, "Persian bullet resolved LTR: {:?}", line.content());
     }
 }
+
+#[test]
+fn wrapped_deployment_instructions_with_secrets_and_env_resolve_rtl_and_rejoin() {
+    let input = "  برای وصلکردن استقرار، در Dockhand همان stackهای فعلی Platform را به این ریپو و مسیر compose.yml منتقل کن؛ stack تازه و volume تازه نساز. شاخهٔ stage برابر stage با PLATFORM_ENV=stg و شاخهٔ production برابر main با PLATFORM_ENV=production باشد. دسترسی خواندن Dockhand به ریپوی خصوصی جدید هم لازم است. در Woodpecker
+  ریپو را فعال کن و چهار secret به نامهای dockhand_stg_webhook_url، dockhand_stg_webhook_secret، dockhand_prod_webhook_url و dockhand_prod_webhook_secret را تنظیم کن. جزئیات در README (/Users/hesamkaveh/projects/navganpro/traccore/README.md) آمده است.
+
+  اسکریپت اولیه، فقط اگر جدول کاربران خالی باشد، کاربر admin@local.c با رمز admin میسازد؛ پس از اولین ورود رمز را تغییر بده.";
+
+    let d = process(input, &Options::default(), CaptureSource::Selection);
+    // Lines 0 and 1 must soft-unwrap into a single RTL paragraph.
+    assert_eq!(d.lines[0].dir, Dir::Rtl);
+    assert!(d.lines[0].content().contains("Woodpecker ریپو را فعال کن"));
+    assert!(d.lines[0].segments.contains(&rtlens_core::Segment::Code("PLATFORM_ENV=stg".into())));
+    assert!(d.lines[0].segments.contains(&rtlens_core::Segment::Code("PLATFORM_ENV=production".into())));
+    assert!(d.lines[0].segments.contains(&rtlens_core::Segment::Code("dockhand_stg_webhook_url".into())));
+    assert!(d.lines[0].segments.contains(&rtlens_core::Segment::Code("dockhand_prod_webhook_secret".into())));
+    assert_eq!(d.lines[2].dir, Dir::Rtl);
+    assert!(d.lines[2].segments.contains(&rtlens_core::Segment::Code("admin@local.c".into())));
+}
