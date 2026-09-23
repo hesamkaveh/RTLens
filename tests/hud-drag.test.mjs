@@ -22,6 +22,13 @@ test("the HUD close control is wired to the hide command", () => {
   assert.match(main, /close\.addEventListener\("click", \(\) => void invoke\("hide_hud"\)\)/);
 });
 
+test("the HUD pin control is wired to set_dismiss_on_blur and excluded from dragging", () => {
+  assert.match(index, /id="pin-btn"[^>]*data-tauri-drag-region="false"/s);
+  const main = readFileSync(new URL("../src/main.ts", import.meta.url), "utf8");
+  assert.match(main, /const pinBtn = el<HTMLButtonElement>\("pin-btn"\)/);
+  assert.match(main, /invoke\("set_dismiss_on_blur", \{ dismissOnBlur: !nextPinned \}\)/);
+});
+
 test("RTL popup text is anchored to the right edge of the available width", () => {
   assert.match(renderer, /if \(!line\.boxed && line\.dir === "rtl"\)/);
   assert.match(layout, /\.rtl-doc \{[^}]*width: 100%;/s);

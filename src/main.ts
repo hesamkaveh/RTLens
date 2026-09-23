@@ -5,6 +5,7 @@ import "./styles/hud.css";
 
 type Settings = {
   fontSize: number;
+  dismissOnBlur?: boolean;
 };
 
 type DocPayload = {
@@ -24,6 +25,7 @@ const emptyTitle = el("empty-title");
 const emptyHint = el("empty-hint");
 const emptyAction = el<HTMLButtonElement>("empty-action");
 const close = el<HTMLButtonElement>("close");
+const pinBtn = el<HTMLButtonElement>("pin-btn");
 const hudHeader = el("hud-header");
 const copyBtn = el<HTMLButtonElement>("copy-btn");
 const copyLabel = el<HTMLSpanElement>("copy-label");
@@ -50,6 +52,21 @@ async function copyDocumentText(): Promise<void> {
 
 copyBtn.addEventListener("click", () => {
   void copyDocumentText();
+});
+
+let isPinned = false;
+
+function updatePinState(pinned: boolean): void {
+  isPinned = pinned;
+  pinBtn.classList.toggle("pinned", pinned);
+  pinBtn.setAttribute("aria-pressed", String(pinned));
+  pinBtn.title = pinned ? "برداشتن سنجاق (بستن با کلیک بیرون)" : "سنجاق کردن پنجره (باز ماندن)";
+}
+
+pinBtn.addEventListener("click", () => {
+  const nextPinned = !isPinned;
+  updatePinState(nextPinned);
+  void invoke("set_dismiss_on_blur", { dismissOnBlur: !nextPinned });
 });
 
 emptyAction.addEventListener("click", () => {
@@ -110,6 +127,9 @@ function remeasureWhenFontsLoad(previous: number): void {
 
 function showDocument(payload: DocPayload): void {
   shell.style.setProperty("--rtl-size", `${payload.settings.fontSize}px`);
+  if (typeof payload.settings.dismissOnBlur === "boolean") {
+    updatePinState(!payload.settings.dismissOnBlur);
+  }
 
   const hasContent = payload.doc.lines.some((line) =>
     line.segments.some((segment) => segment.text.trim() !== "")
@@ -159,7 +179,13 @@ close.addEventListener("click", () => void invoke("hide_hud"));
 
 function applySettings(next: Settings): void {
   shell.style.setProperty("--rtl-size", `${next.fontSize}px`);
+  if (typeof next.dismissOnBlur === "boolean") {
+    updatePinState(!next.dismissOnBlur);
+  }
 }
 
 void listen<DocPayload>("rtlens://doc", (event) => showDocument(event.payload));
 void listen<Settings>("rtlens://settings", (event) => applySettings(event.payload));
+void invoke<Settings>("get_settings")
+  .then(applySettings)
+  .catch(() => undefined);

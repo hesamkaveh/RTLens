@@ -157,6 +157,19 @@ fn set_engine<R: Runtime>(app: AppHandle<R>, engine: Options) -> Result<Doc, Str
     Ok(doc)
 }
 
+/// Update the dismiss_on_blur setting, persist it, and broadcast to all windows.
+#[tauri::command]
+fn set_dismiss_on_blur<R: Runtime>(app: AppHandle<R>, dismiss_on_blur: bool) -> Result<bool, String> {
+    let state = app.state::<RtState>();
+    let mut settings = state.settings.lock().expect("settings lock");
+    settings.dismiss_on_blur = dismiss_on_blur;
+    let snapshot = settings.clone();
+    drop(settings);
+    config::save(&app, &snapshot)?;
+    broadcast_settings(&app, &snapshot);
+    Ok(snapshot.dismiss_on_blur)
+}
+
 #[tauri::command]
 fn antigravity_status<R: Runtime>(app: AppHandle<R>) -> antigravity::Status {
     app.state::<antigravity::Antigravity>().status()
@@ -236,6 +249,7 @@ pub fn run() {
             get_settings,
             save_settings,
             set_engine,
+            set_dismiss_on_blur,
             antigravity_status,
             accessibility_status,
             request_accessibility_permission,

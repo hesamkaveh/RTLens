@@ -210,8 +210,49 @@ html, body {
   outline-offset: 1px;
 }
 
+#pin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, transform 120ms ease;
+}
+#pin-btn:hover {
+  background: var(--pill-hover);
+  color: var(--fg);
+}
+#pin-btn:active {
+  transform: scale(0.92);
+}
+#pin-btn:focus-visible {
+  outline: 2px solid #0a84ff;
+  outline-offset: 1px;
+}
+#pin-btn.pinned {
+  color: #0a84ff;
+  background: rgba(10, 132, 255, 0.16);
+}
+#pin-btn.pinned svg path:last-child {
+  fill: currentColor;
+}
+
+@media (prefers-color-scheme: dark) {
+  #pin-btn.pinned {
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.2);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   #close,
+  #pin-btn,
   #copy-btn,
   #drag-handle,
   #hud-actions { transition: none; }
