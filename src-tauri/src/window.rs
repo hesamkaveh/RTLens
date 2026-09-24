@@ -53,6 +53,7 @@ pub fn apply_effects<R: Runtime>(window: &WebviewWindow<R>) {
 /// at the wrong size and then jumps.
 pub fn present<R: Runtime>(app: &AppHandle<R>, content_height: f64) {
     let Some(window) = hud(app) else { return };
+    let already_visible = window.is_visible().unwrap_or(false);
 
     let width = window
         .outer_size()
@@ -65,8 +66,12 @@ pub fn present<R: Runtime>(app: &AppHandle<R>, content_height: f64) {
         tracing::warn!("could not resize HUD: {e}");
     }
 
-    if let Err(e) = position_near_cursor(app, &window) {
-        tracing::warn!("could not position HUD: {e}");
+    if !already_visible {
+        if let Err(e) = position_near_cursor(app, &window) {
+            tracing::warn!("could not position HUD: {e}");
+        }
+    } else if let Err(e) = clamp_to_screen(app, &window) {
+        tracing::warn!("could not clamp HUD to screen: {e}");
     }
 
     let _ = window.show();
@@ -74,6 +79,28 @@ pub fn present<R: Runtime>(app: &AppHandle<R>, content_height: f64) {
     // so there is nothing left to steal, and without focus the Escape and Enter keys —
     // the only way to dismiss or copy — would never reach the webview.
     let _ = window.set_focus();
+}
+
+fn clamp_to_screen<R: Runtime>(app: &AppHandle<R>, window: &WebviewWindow<R>) -> tauri::Result<()> {
+    let pos = window.outer_position()?;
+    let size = window.outer_size()?;
+    let monitor = app.monitor_from_point(pos.x as f64, pos.y as f64)?.or(app.primary_monitor()?);
+    let Some(monitor) = monitor else { return Ok(()) };
+
+    let area = monitor.size();
+    let origin = monitor.position();
+    let scale = monitor.scale_factor();
+    let margin = MARGIN * scale;
+
+    let max_x = (origin.x + area.width as i32) as f64 - size.width as f64 - margin;
+    let max_y = (origin.y + area.height as i32) as f64 - size.height as f64 - margin;
+    let x = (pos.x as f64).min(max_x).max(origin.x as f64 + margin);
+    let y = (pos.y as f64).min(max_y).max(origin.y as f64 + margin);
+
+    if (x - pos.x as f64).abs() > 1.0 || (y - pos.y as f64).abs() > 1.0 {
+        window.set_position(PhysicalPosition::new(x, y))?;
+    }
+    Ok(())
 }
 
 fn position_near_cursor<R: Runtime>(app: &AppHandle<R>, window: &WebviewWindow<R>) -> tauri::Result<()> {

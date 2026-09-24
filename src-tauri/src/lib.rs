@@ -39,10 +39,46 @@ struct DocPayload {
     can_capture: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TriggerAction {
+    /// Dismiss the HUD window.
+    Dismiss,
+    /// Update the HUD window with the captured content.
+    Update,
+}
+
+/// Decide whether pressing the global hotkey should update the HUD or dismiss it.
+pub fn decide_trigger_action(
+    is_hud_visible: bool,
+    is_pinned: bool,
+    has_selection: bool,
+    new_text: &str,
+    last_text: &str,
+) -> TriggerAction {
+    if !is_hud_visible {
+        return TriggerAction::Update;
+    }
+    if !is_pinned {
+        return TriggerAction::Dismiss;
+    }
+    if !has_selection || new_text.trim() == last_text.trim() {
+        TriggerAction::Dismiss
+    } else {
+        TriggerAction::Update
+    }
+}
+
 /// Capture, analyse and show. Safe to call from any thread.
 pub fn trigger<R: Runtime>(app: &AppHandle<R>) {
-    // A second press while the HUD is up means "put it away".
-    if window::is_visible(app) {
+    let is_hud_visible = window::is_visible(app);
+    let is_pinned = {
+        let state = app.state::<RtState>();
+        let settings = state.settings.lock().expect("settings lock");
+        !settings.dismiss_on_blur
+    };
+
+    // If the HUD is visible and not pinned, putting it away is instantaneous.
+    if is_hud_visible && !is_pinned {
         window::hide(app);
         return;
     }
@@ -57,6 +93,18 @@ pub fn trigger<R: Runtime>(app: &AppHandle<R>) {
 
         let captured = state.capturer.capture(DEFAULT_BUDGET, settings.clipboard_fallback);
         let can_capture = state.capturer.can_synthesize();
+
+        let has_selection = captured.source == rtlens_core::CaptureSource::Selection
+            && !captured.text.trim().is_empty();
+        let last_raw = state.last_raw.lock().expect("raw lock").clone();
+
+        if decide_trigger_action(is_hud_visible, is_pinned, has_selection, &captured.text, &last_raw)
+            == TriggerAction::Dismiss
+        {
+            window::hide(&app);
+            return;
+        }
+
         let doc = rtlens_core::process(&captured.text, &settings.engine, captured.source);
 
         *state.last_raw.lock().expect("raw lock") = captured.text;
@@ -344,13 +392,62 @@ pub fn run() {
         });
 }
 
-#[cfg(all(test, target_os = "macos"))]
+#[cfg(test)]
 mod tests {
-    use super::should_open_settings_on_reopen;
+    use super::*;
 
+    #[cfg(target_os = "macos")]
     #[test]
     fn dock_reopen_opens_settings_when_all_windows_are_hidden() {
         assert!(should_open_settings_on_reopen(false));
         assert!(!should_open_settings_on_reopen(true));
+    }
+
+    #[test]
+    fn trigger_action_opens_when_hidden() {
+        assert_eq!(
+            decide_trigger_action(false, false, true, "foo", "bar"),
+            TriggerAction::Update
+        );
+        assert_eq!(
+            decide_trigger_action(false, true, true, "foo", "bar"),
+            TriggerAction::Update
+        );
+    }
+
+    #[test]
+    fn trigger_action_dismisses_unpinned_hud_when_visible() {
+        assert_eq!(
+            decide_trigger_action(true, false, true, "new", "old"),
+            TriggerAction::Dismiss
+        );
+    }
+
+    #[test]
+    fn trigger_action_pinned_hud_updates_on_new_selection() {
+        assert_eq!(
+            decide_trigger_action(true, true, true, "متن جدید", "متن قدیمی"),
+            TriggerAction::Update
+        );
+    }
+
+    #[test]
+    fn trigger_action_pinned_hud_dismisses_when_no_selection() {
+        assert_eq!(
+            decide_trigger_action(true, true, false, "", "متن قدیمی"),
+            TriggerAction::Dismiss
+        );
+    }
+
+    #[test]
+    fn trigger_action_pinned_hud_dismisses_when_same_text_triggered_again() {
+        assert_eq!(
+            decide_trigger_action(true, true, true, "متن تکراری", "متن تکراری"),
+            TriggerAction::Dismiss
+        );
+        assert_eq!(
+            decide_trigger_action(true, true, true, "  متن تکراری\n", "متن تکراری"),
+            TriggerAction::Dismiss
+        );
     }
 }
