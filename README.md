@@ -1,6 +1,8 @@
 # RTLens
 
-**Select mixed Persian/English terminal output, press a hotkey, read it laid out correctly.**
+**RTLens fixes broken Persian (Farsi) and mixed right-to-left (RTL/BiDi) terminal output.**
+Select text, press a hotkey, and read paths, wrapped lines, and tables in the correct order.
+Available for macOS now; Windows and Linux builds are planned. [Download the latest release](https://github.com/hesamkaveh/RTLens/releases/latest).
 
 [![CI](https://github.com/hesamkaveh/RTLens/actions/workflows/ci.yml/badge.svg)](https://github.com/hesamkaveh/RTLens/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
