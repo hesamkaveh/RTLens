@@ -201,7 +201,7 @@ async function runDailyUpdateCheck() {
   const now = Date.now();
   const ONE_DAY = 24 * 60 * 60 * 1000;
   
-  if (!lastCheck || true) {
+  if (!lastCheck || now - parseInt(lastCheck) > ONE_DAY) {
     localStorage.setItem("last_update_check", now.toString());
     try {
       const update = await check();
