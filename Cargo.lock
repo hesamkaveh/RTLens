@@ -3338,7 +3338,7 @@ dependencies = [
 
 [[package]]
 name = "rtlens"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "arboard",
  "core-graphics",
@@ -3365,7 +3365,7 @@ dependencies = [
 
 [[package]]
 name = "rtlens-core"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "insta",
  "once_cell",
