@@ -112,7 +112,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
 
       - name: Build universal DMG
-        run: pnpm tauri build --target universal-apple-darwin --bundles dmg
+        run: pnpm tauri build --target universal-apple-darwin 
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
 
