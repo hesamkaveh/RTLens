@@ -57,6 +57,13 @@
         font-family: -apple-system, BlinkMacSystemFont, "Vazirmatn", "Shabnam", "Sahel", "SF Arabic", "Geeza Pro", "Segoe UI", Roboto, sans-serif !important;
     }
 
+    /* Text inputs, textareas, and prompt editors (e.g. Lexical in Antigravity)
+       always use the Persian font stack so typed Persian characters render in
+       Vazirmatn instead of falling back to system Arabic (Arial / SF Arabic). */
+    :is(input:not([type="checkbox"]):not([type="radio"]):not([type="password"]), textarea, [contenteditable="true"], [data-lexical-editor], [data-lexical-editor] *):not(.monaco-editor *) {
+        font-family: -apple-system, BlinkMacSystemFont, "Vazirmatn", "Shabnam", "Sahel", "SF Arabic", "Geeza Pro", "Segoe UI", Roboto, sans-serif !important;
+    }
+
     [data-testid="user-input-step"] [data-quotable="true"][data-rtlens-dir="rtl"],
     .artifact-card [data-rtlens-dir="rtl"] {
         display: block !important;

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { classifyText, RTL_RATIO } = require('../integrations/antigravity/client.cjs');
+const { classifyText, RTL_CSS, RTL_RATIO } = require('../integrations/antigravity/client.cjs');
 const { getClientScript } = require('../scripts/inject-antigravity.cjs');
 
 test('text without RTL letters is left to the browser', () => {
@@ -21,4 +21,10 @@ test('a single Persian word in English prose stays LTR', () => {
 
 test('client script is valid JavaScript', () => {
     assert.doesNotThrow(() => new Function(getClientScript()));
+});
+
+test('RTL_CSS covers inputs and prompt editors with Persian font stack', () => {
+    assert.match(RTL_CSS, /contenteditable/);
+    assert.match(RTL_CSS, /data-lexical-editor/);
+    assert.match(RTL_CSS, /Vazirmatn/);
 });
