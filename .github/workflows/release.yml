@@ -119,9 +119,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          cd target/universal-apple-darwin/release/bundle/macos
-          tar -czf "RTLens_${VERSION}_universal.app.tar.gz" RTLens.app
-          pnpm tauri signer sign -f "RTLens_${VERSION}_universal.app.tar.gz"
+          tar -czf "target/universal-apple-darwin/release/bundle/macos/RTLens_${VERSION}_universal.app.tar.gz" -C target/universal-apple-darwin/release/bundle/macos RTLens.app
+          pnpm tauri signer sign -f "target/universal-apple-darwin/release/bundle/macos/RTLens_${VERSION}_universal.app.tar.gz"
 
       - name: Generate updater.json
         if: startsWith(github.ref, 'refs/tags/')
