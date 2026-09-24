@@ -184,8 +184,51 @@ function applySettings(next: Settings): void {
   }
 }
 
-void listen<DocPayload>("rtlens://doc", (event) => showDocument(event.payload));
+void listen<DocPayload>("rtlens://doc", (event) => {
+  showDocument(event.payload);
+  void runDailyUpdateCheck();
+});
 void listen<Settings>("rtlens://settings", (event) => applySettings(event.payload));
 void invoke<Settings>("get_settings")
   .then(applySettings)
   .catch(() => undefined);
+
+import { check } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
+
+async function runDailyUpdateCheck() {
+  const lastCheck = localStorage.getItem("last_update_check");
+  const now = Date.now();
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+  
+  if (!lastCheck || now - parseInt(lastCheck) > ONE_DAY) {
+    localStorage.setItem("last_update_check", now.toString());
+    try {
+      const update = await check();
+      if (update) {
+        const divider = document.getElementById("update-divider");
+        const btn = document.getElementById("hud-update-btn");
+        const label = document.getElementById("hud-update-label");
+        
+        if (divider && btn && label) {
+          divider.hidden = false;
+          btn.hidden = false;
+          btn.onclick = async () => {
+            (btn as HTMLButtonElement).disabled = true;
+            label.textContent = "دانلود...";
+            try {
+              await update.downloadAndInstall();
+              label.textContent = "نصب شد!";
+              setTimeout(() => void relaunch(), 1000);
+            } catch (e) {
+              console.error(e);
+              label.textContent = "خطا";
+            }
+          };
+        }
+      }
+    } catch (e) {
+      console.error("Background update check failed", e);
+    }
+  }
+}

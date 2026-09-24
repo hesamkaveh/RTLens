@@ -53,5 +53,13 @@
       "minimumSystemVersion": "11.0",
       "signingIdentity": "RTLens"
     }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/hesamkaveh/RTLens/releases/latest/download/updater.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU4QTc5MUEyRjU1ODY4RkYKUldUL2FGajFvcEduNkc2Q3ZjelFYWVFQWE1jeHhEbzJJaEFJdTd0cmpUN011blNHUEtjMUREd2EK"
+    }
   }
 }

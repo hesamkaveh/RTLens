@@ -104,6 +104,7 @@ jobs:
       - run: pnpm tauri build --target universal-apple-darwin
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
 
       - name: Verify macOS signature
         shell: bash
@@ -111,7 +112,34 @@ jobs:
           codesign --verify --deep --strict --verbose=2 \
             target/universal-apple-darwin/release/bundle/macos/RTLens.app
 
-      - name: Attach the DMG to the release
+      - name: Generate updater.json
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          URL="https://github.com/hesamkaveh/RTLens/releases/download/${GITHUB_REF_NAME}/RTLens_${VERSION}_universal.app.tar.gz"
+          SIG=$(cat target/universal-apple-darwin/release/bundle/macos/*.app.tar.gz.sig)
+
+          cat > updater.json <<EOF
+          {
+            "version": "$VERSION",
+            "notes": "Update to RTLens $GITHUB_REF_NAME",
+            "pub_date": "$PUB_DATE",
+            "platforms": {
+              "darwin-aarch64": {
+                "signature": "$SIG",
+                "url": "$URL"
+              },
+              "darwin-x86_64": {
+                "signature": "$SIG",
+                "url": "$URL"
+              }
+            }
+          }
+          EOF
+
+      - name: Attach the DMG and updater to the release
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
@@ -120,9 +148,15 @@ jobs:
             --title "RTLens ${GITHUB_REF_NAME}" \
             --generate-notes \
             --verify-tag \
-            target/universal-apple-darwin/release/bundle/dmg/*.dmg || \
+            target/universal-apple-darwin/release/bundle/dmg/*.dmg \
+            target/universal-apple-darwin/release/bundle/macos/*.app.tar.gz \
+            target/universal-apple-darwin/release/bundle/macos/*.app.tar.gz.sig \
+            updater.json || \
           gh release upload "${GITHUB_REF_NAME}" --clobber \
-            target/universal-apple-darwin/release/bundle/dmg/*.dmg
+            target/universal-apple-darwin/release/bundle/dmg/*.dmg \
+            target/universal-apple-darwin/release/bundle/macos/*.app.tar.gz \
+            target/universal-apple-darwin/release/bundle/macos/*.app.tar.gz.sig \
+            updater.json
 
       - name: Keep the bundle when there is no tag to release to
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}

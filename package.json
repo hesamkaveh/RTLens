@@ -32,11 +32,13 @@
     "check": "tsc --noEmit && cargo clippy --workspace --all-targets -- -D warnings"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2"
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-updater": "^2.12.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
-    "vite": "^8.0.16",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16"
   }
 }

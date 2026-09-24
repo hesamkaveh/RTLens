@@ -1,5 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { check } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 import "./styles/settings.css";
 
 type EngineOptions = {
@@ -172,6 +174,37 @@ async function init(): Promise<void> {
   setInterval(() => {
     if (document.visibilityState === "visible") void refreshAntigravity();
   }, 2000);
+
+  void checkUpdateManual();
+}
+
+const updateStatus = el("update-status");
+const updateBtn = el<HTMLButtonElement>("update-btn");
+
+async function checkUpdateManual() {
+  try {
+    const update = await check();
+    if (update) {
+      updateStatus.textContent = `New version available: v${update.version}`;
+      updateBtn.hidden = false;
+      updateBtn.onclick = async () => {
+        updateBtn.disabled = true;
+        updateStatus.textContent = "Downloading...";
+        await update.downloadAndInstall((event) => {
+          if (event.event === "Finished") {
+            updateStatus.textContent = "Installing...";
+          }
+        });
+        updateStatus.textContent = "Installed! Restarting...";
+        await relaunch();
+      };
+    } else {
+      updateStatus.textContent = "You are on the latest version.";
+    }
+  } catch (err) {
+    updateStatus.textContent = "Check failed.";
+    console.error("Failed to check for updates:", err);
+  }
 }
 
 void init();
