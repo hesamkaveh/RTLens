@@ -94,8 +94,8 @@ pub fn trigger<R: Runtime>(app: &AppHandle<R>) {
         let captured = state.capturer.capture(DEFAULT_BUDGET, settings.clipboard_fallback);
         let can_capture = state.capturer.can_synthesize();
 
-        let has_selection = captured.source == rtlens_core::CaptureSource::Selection
-            && !captured.text.trim().is_empty();
+        let has_selection =
+            captured.source == rtlens_core::CaptureSource::Selection && !captured.text.trim().is_empty();
         let last_raw = state.last_raw.lock().expect("raw lock").clone();
 
         if decide_trigger_action(is_hud_visible, is_pinned, has_selection, &captured.text, &last_raw)
@@ -407,38 +407,23 @@ mod tests {
 
     #[test]
     fn trigger_action_opens_when_hidden() {
-        assert_eq!(
-            decide_trigger_action(false, false, true, "foo", "bar"),
-            TriggerAction::Update
-        );
-        assert_eq!(
-            decide_trigger_action(false, true, true, "foo", "bar"),
-            TriggerAction::Update
-        );
+        assert_eq!(decide_trigger_action(false, false, true, "foo", "bar"), TriggerAction::Update);
+        assert_eq!(decide_trigger_action(false, true, true, "foo", "bar"), TriggerAction::Update);
     }
 
     #[test]
     fn trigger_action_dismisses_unpinned_hud_when_visible() {
-        assert_eq!(
-            decide_trigger_action(true, false, true, "new", "old"),
-            TriggerAction::Dismiss
-        );
+        assert_eq!(decide_trigger_action(true, false, true, "new", "old"), TriggerAction::Dismiss);
     }
 
     #[test]
     fn trigger_action_pinned_hud_updates_on_new_selection() {
-        assert_eq!(
-            decide_trigger_action(true, true, true, "متن جدید", "متن قدیمی"),
-            TriggerAction::Update
-        );
+        assert_eq!(decide_trigger_action(true, true, true, "متن جدید", "متن قدیمی"), TriggerAction::Update);
     }
 
     #[test]
     fn trigger_action_pinned_hud_dismisses_when_no_selection() {
-        assert_eq!(
-            decide_trigger_action(true, true, false, "", "متن قدیمی"),
-            TriggerAction::Dismiss
-        );
+        assert_eq!(decide_trigger_action(true, true, false, "", "متن قدیمی"), TriggerAction::Dismiss);
     }
 
     #[test]
