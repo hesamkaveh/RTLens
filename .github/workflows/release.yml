@@ -38,8 +38,9 @@ jobs:
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         run: |
-          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY KEYCHAIN_PASSWORD; do
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY KEYCHAIN_PASSWORD TAURI_SIGNING_PRIVATE_KEY; do
             if [[ -z "${!name}" ]]; then
               echo "Missing required GitHub Actions secret: ${name}" >&2
               exit 1
@@ -98,23 +99,12 @@ jobs:
           # shellcheck disable=SC2086
           security list-keychains -d user -s "$keychain_path" $existing_keychains
 
-      # Build targets separately to let Tauri natively generate .tar.gz updater artifacts
-      - name: Build aarch64
-        run: pnpm tauri build --target aarch64-apple-darwin --bundles app
+      - name: Build universal app, DMG, and updater bundle
+        run: pnpm tauri build --target universal-apple-darwin
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-
-      - name: Build x86_64
-        run: pnpm tauri build --target x86_64-apple-darwin --bundles app
-        env:
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-
-      - name: Build universal DMG
-        run: pnpm tauri build --target universal-apple-darwin 
-        env:
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Verify macOS signature
         shell: bash
@@ -122,19 +112,14 @@ jobs:
           codesign --verify --deep --strict --verbose=2 \
             target/universal-apple-darwin/release/bundle/macos/RTLens.app
 
-      - name: Prepare updater artifacts
+      - name: Verify release artifacts
         if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          
-          # Rename aarch64 bundle
-          mv target/aarch64-apple-darwin/release/bundle/macos/RTLens.app.tar.gz target/aarch64-apple-darwin/release/bundle/macos/RTLens_${VERSION}_aarch64.app.tar.gz
-          mv target/aarch64-apple-darwin/release/bundle/macos/RTLens.app.tar.gz.sig target/aarch64-apple-darwin/release/bundle/macos/RTLens_${VERSION}_aarch64.app.tar.gz.sig
-          
-          # Rename x86_64 bundle
-          mv target/x86_64-apple-darwin/release/bundle/macos/RTLens.app.tar.gz target/x86_64-apple-darwin/release/bundle/macos/RTLens_${VERSION}_x64.app.tar.gz
-          mv target/x86_64-apple-darwin/release/bundle/macos/RTLens.app.tar.gz.sig target/x86_64-apple-darwin/release/bundle/macos/RTLens_${VERSION}_x64.app.tar.gz.sig
+          bundle_dir=target/universal-apple-darwin/release/bundle
+          test -s "$bundle_dir/macos/RTLens.app.tar.gz"
+          test -s "$bundle_dir/macos/RTLens.app.tar.gz.sig"
+          compgen -G "$bundle_dir/dmg/*.dmg" > /dev/null
 
       - name: Generate updater.json
         if: startsWith(github.ref, 'refs/tags/')
@@ -143,11 +128,8 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           
-          URL_AARCH64="https://github.com/hesamkaveh/RTLens/releases/download/${GITHUB_REF_NAME}/RTLens_${VERSION}_aarch64.app.tar.gz"
-          SIG_AARCH64=$(cat target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz.sig)
-
-          URL_X64="https://github.com/hesamkaveh/RTLens/releases/download/${GITHUB_REF_NAME}/RTLens_${VERSION}_x64.app.tar.gz"
-          SIG_X64=$(cat target/x86_64-apple-darwin/release/bundle/macos/*.app.tar.gz.sig)
+          URL="https://github.com/hesamkaveh/RTLens/releases/download/${GITHUB_REF_NAME}/RTLens.app.tar.gz"
+          SIG=$(cat target/universal-apple-darwin/release/bundle/macos/RTLens.app.tar.gz.sig)
 
           cat > updater.json <<EOF
           {
@@ -156,16 +138,17 @@ jobs:
             "pub_date": "$PUB_DATE",
             "platforms": {
               "darwin-aarch64": {
-                "signature": "$SIG_AARCH64",
-                "url": "$URL_AARCH64"
+                "signature": "$SIG",
+                "url": "$URL"
               },
               "darwin-x86_64": {
-                "signature": "$SIG_X64",
-                "url": "$URL_X64"
+                "signature": "$SIG",
+                "url": "$URL"
               }
             }
           }
           EOF
+          python3 -m json.tool updater.json > /dev/null
 
       - name: Attach the DMG and updater to the release
         if: startsWith(github.ref, 'refs/tags/')
@@ -177,17 +160,13 @@ jobs:
             --generate-notes \
             --verify-tag \
             target/universal-apple-darwin/release/bundle/dmg/*.dmg \
-            target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz \
-            target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz.sig \
-            target/x86_64-apple-darwin/release/bundle/macos/*.app.tar.gz \
-            target/x86_64-apple-darwin/release/bundle/macos/*.app.tar.gz.sig \
+            target/universal-apple-darwin/release/bundle/macos/RTLens.app.tar.gz \
+            target/universal-apple-darwin/release/bundle/macos/RTLens.app.tar.gz.sig \
             updater.json || \
           gh release upload "${GITHUB_REF_NAME}" --clobber \
             target/universal-apple-darwin/release/bundle/dmg/*.dmg \
-            target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz \
-            target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz.sig \
-            target/x86_64-apple-darwin/release/bundle/macos/*.app.tar.gz \
-            target/x86_64-apple-darwin/release/bundle/macos/*.app.tar.gz.sig \
+            target/universal-apple-darwin/release/bundle/macos/RTLens.app.tar.gz \
+            target/universal-apple-darwin/release/bundle/macos/RTLens.app.tar.gz.sig \
             updater.json
 
       - name: Keep the bundle when there is no tag to release to
