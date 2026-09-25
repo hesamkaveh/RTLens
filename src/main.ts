@@ -1,5 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { check } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { renderDoc, type Doc } from "./render";
 import "./styles/hud.css";
 
@@ -193,19 +195,21 @@ void invoke<Settings>("get_settings")
   .then(applySettings)
   .catch(() => undefined);
 
-import { check } from "@tauri-apps/plugin-updater";
-import { relaunch } from "@tauri-apps/plugin-process";
+let checkingForUpdate = false;
+let updateAvailable = false;
 
 async function runDailyUpdateCheck() {
-  const lastCheck = localStorage.getItem("last_update_check");
+  if (checkingForUpdate || updateAvailable) return;
+  const lastCheck = Number(localStorage.getItem("last_update_check"));
   const now = Date.now();
   const ONE_DAY = 24 * 60 * 60 * 1000;
-  
-  if (!lastCheck || now - parseInt(lastCheck) > ONE_DAY) {
-    localStorage.setItem("last_update_check", now.toString());
+
+  if (!lastCheck || now - lastCheck > ONE_DAY) {
+    checkingForUpdate = true;
     try {
       const update = await check();
       if (update) {
+        updateAvailable = true;
         const divider = document.getElementById("update-divider");
         const btn = document.getElementById("hud-update-btn");
         const label = document.getElementById("hud-update-label");
@@ -222,13 +226,18 @@ async function runDailyUpdateCheck() {
               setTimeout(() => void relaunch(), 1000);
             } catch (e) {
               console.error(e);
-              label.textContent = "خطا";
+              label.textContent = "خطا؛ دوباره تلاش کنید";
+              (btn as HTMLButtonElement).disabled = false;
             }
           };
         }
+      } else {
+        localStorage.setItem("last_update_check", Date.now().toString());
       }
     } catch (e) {
       console.error("Background update check failed", e);
+    } finally {
+      checkingForUpdate = false;
     }
   }
 }

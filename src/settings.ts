@@ -180,8 +180,13 @@ async function init(): Promise<void> {
 
 const updateStatus = el("update-status");
 const updateBtn = el<HTMLButtonElement>("update-btn");
+const checkUpdateBtn = el<HTMLButtonElement>("check-update-btn");
+
+checkUpdateBtn.addEventListener("click", () => void checkUpdateManual());
 
 async function checkUpdateManual() {
+  checkUpdateBtn.disabled = true;
+  updateStatus.textContent = "Checking for updates…";
   try {
     const update = await check();
     if (update) {
@@ -190,20 +195,30 @@ async function checkUpdateManual() {
       updateBtn.onclick = async () => {
         updateBtn.disabled = true;
         updateStatus.textContent = "Downloading...";
-        await update.downloadAndInstall((event) => {
-          if (event.event === "Finished") {
-            updateStatus.textContent = "Installing...";
-          }
-        });
-        updateStatus.textContent = "Installed! Restarting...";
-        await relaunch();
+        try {
+          await update.downloadAndInstall((event) => {
+            if (event.event === "Finished") {
+              updateStatus.textContent = "Installing...";
+            }
+          });
+          updateStatus.textContent = "Installed! Restarting...";
+          await relaunch();
+        } catch (err) {
+          updateStatus.textContent = "Update failed. Try again.";
+          updateBtn.disabled = false;
+          console.error("Failed to install update:", err);
+        }
       };
     } else {
+      updateBtn.hidden = true;
       updateStatus.textContent = "You are on the latest version.";
     }
   } catch (err) {
+    updateBtn.hidden = true;
     updateStatus.textContent = "Check failed.";
     console.error("Failed to check for updates:", err);
+  } finally {
+    checkUpdateBtn.disabled = false;
   }
 }
 
