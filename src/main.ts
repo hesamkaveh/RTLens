@@ -41,11 +41,11 @@ async function copyDocumentText(): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
     copyBtn.classList.add("copied");
-    if (copyLabel) copyLabel.textContent = "کپی شد";
+    if (copyLabel) copyLabel.textContent = "Copied";
     if (copyTimeout) window.clearTimeout(copyTimeout);
     copyTimeout = window.setTimeout(() => {
       copyBtn.classList.remove("copied");
-      if (copyLabel) copyLabel.textContent = "کپی";
+      if (copyLabel) copyLabel.textContent = "Copy";
     }, 1500);
   } catch (err) {
     console.error("Failed to copy text:", err);
@@ -62,7 +62,8 @@ function updatePinState(pinned: boolean): void {
   isPinned = pinned;
   pinBtn.classList.toggle("pinned", pinned);
   pinBtn.setAttribute("aria-pressed", String(pinned));
-  pinBtn.title = pinned ? "برداشتن سنجاق (بستن با کلیک بیرون)" : "سنجاق کردن پنجره (باز ماندن)";
+  pinBtn.title = pinned ? "Unpin popup (close on outside click)" : "Pin popup (keep open)";
+  pinBtn.setAttribute("aria-label", pinned ? "Unpin popup" : "Pin popup");
 }
 
 pinBtn.addEventListener("click", () => {
@@ -219,14 +220,14 @@ async function runDailyUpdateCheck() {
           btn.hidden = false;
           btn.onclick = async () => {
             (btn as HTMLButtonElement).disabled = true;
-            label.textContent = "دانلود...";
+            label.textContent = "Downloading...";
             try {
               await update.downloadAndInstall();
-              label.textContent = "نصب شد!";
+              label.textContent = "Installed!";
               setTimeout(() => void relaunch(), 1000);
             } catch (e) {
               console.error(e);
-              label.textContent = "خطا؛ دوباره تلاش کنید";
+              label.textContent = "Update failed. Retry";
               (btn as HTMLButtonElement).disabled = false;
             }
           };
