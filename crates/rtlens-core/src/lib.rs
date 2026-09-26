@@ -128,14 +128,29 @@ pub fn process(input: &str, opts: &Options, source: CaptureSource) -> Doc {
     // Structure first: gutters and fenced-block state, before anything reads direction.
     let mut splits: Vec<(gutter::Split, bool)> = Vec::new();
     let mut in_fence = false;
-    for line in cleaned.split('\n') {
-        let split = gutter::split(line);
+    for raw_line in cleaned.split('\n') {
+        let (line_a, line_b) = match table::split_welded_rule(raw_line) {
+            Some((a, b)) => (Some(a), Some(b)),
+            None => (None, None),
+        };
+        let first = line_a.as_deref().unwrap_or(raw_line);
+        let split = gutter::split(first);
         let fence_delim = is_fence(&split.content);
         let in_code = in_fence || fence_delim;
         if fence_delim {
             in_fence = !in_fence;
         }
         splits.push((split, in_code));
+
+        if let Some(second) = line_b {
+            let split = gutter::split(&second);
+            let fence_delim = is_fence(&split.content);
+            let in_code = in_fence || fence_delim;
+            if fence_delim {
+                in_fence = !in_fence;
+            }
+            splits.push((split, in_code));
+        }
     }
 
     // A line that is evenly balanced cannot resolve itself, so the surrounding document

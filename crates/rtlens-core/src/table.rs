@@ -140,6 +140,41 @@ fn is_frame(line: &str) -> bool {
     is_rule(line) && line.chars().any(|c| CORNERS.contains(&c))
 }
 
+/// When a terminal emulator soft-wraps or screen-pads a table header line to the terminal
+/// window width without emitting a newline, the following rule line can arrive welded to
+/// the end of the header after a wide run of spaces.
+///
+/// If `line` contains non-rule text followed by a wide space gap (>= 8 spaces) and then
+/// an explicit rule suffix (satisfying [`is_rule`] and containing at least 10 rule glyphs),
+/// this splits them back into two lines: (text_part, rule_part).
+pub fn split_welded_rule(line: &str) -> Option<(String, String)> {
+    if is_rule(line) {
+        return None;
+    }
+    let chars: Vec<char> = line.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == ' ' {
+            let start = i;
+            while i < chars.len() && chars[i] == ' ' {
+                i += 1;
+            }
+            let gap = i - start;
+            if gap >= 8 && i < chars.len() {
+                let rest: String = chars[i..].iter().collect();
+                let rule_chars_count = rest.chars().filter(|c| RULE_CHARS.contains(c)).count();
+                if is_rule(&rest) && rule_chars_count >= 10 {
+                    let text_part: String = chars[..start].iter().collect();
+                    return Some((text_part.trim_end().to_string(), rest));
+                }
+            }
+        } else {
+            i += 1;
+        }
+    }
+    None
+}
+
 // ------------------------------------------------------------------ boundary finding
 
 /// Columns where a vertical rule stands on every row that reaches them.
@@ -169,8 +204,20 @@ fn delimited_bounds(rows: &[&Cols], delim: char) -> Vec<usize> {
     bounds
 }
 
+/// Internal gaps in rule lines (the whitespace between `━━━━  ━━━━` segments).
+fn internal_rule_gaps(rule: &Cols) -> Vec<std::ops::Range<usize>> {
+    let first_ink = rule.filled.iter().position(|&f| f).unwrap_or(0);
+    let last_ink = rule.filled.iter().rposition(|&f| f).unwrap_or(0);
+    let all_gaps = spaced_gaps(&[rule], &[]);
+    all_gaps.into_iter().filter(|g| g.start > first_ink && g.end <= last_ink).collect()
+}
+
 /// Runs of columns left blank by every row — the gutters of a whitespace-aligned table.
-fn spaced_gaps(rows: &[&Cols]) -> Vec<std::ops::Range<usize>> {
+///
+/// When segmented rule lines (like `━━━━  ━━━━`) are present, a 1-column blank gap is
+/// accepted if it coincides with a gap in the rule line, accommodating slight column
+/// raggedness across wide tables.
+fn spaced_gaps(rows: &[&Cols], rule_gaps: &[std::ops::Range<usize>]) -> Vec<std::ops::Range<usize>> {
     let width = rows.iter().map(|r| r.width()).max().unwrap_or(0);
     let mut gaps = Vec::new();
     let mut run: Option<usize> = None;
@@ -179,7 +226,9 @@ fn spaced_gaps(rows: &[&Cols]) -> Vec<std::ops::Range<usize>> {
         match (blank, run) {
             (true, None) => run = Some(c),
             (false, Some(start)) => {
-                if c - start >= MIN_GAP {
+                let len = c - start;
+                let near_rule = rule_gaps.iter().any(|rg| (start <= rg.end + 2) && (c + 2 >= rg.start));
+                if len >= MIN_GAP || (len == 1 && near_rule) {
                     gaps.push(start..c);
                 }
                 run = None;
@@ -268,6 +317,8 @@ fn analyse(lines: &[Candidate<'_>], start: usize, end: usize) -> Option<Table> {
         return None;
     }
     let width = content.iter().map(|g| g.width()).max().unwrap_or(0);
+    let rules: Vec<&Cols> = grids.iter().zip(&kinds).filter(|(_, rule)| **rule).map(|(g, _)| g).collect();
+    let rule_gaps: Vec<std::ops::Range<usize>> = rules.iter().flat_map(|r| internal_rule_gaps(r)).collect();
 
     // Prefer an explicit delimiter; fall back to reading the blank columns.
     let delim = DELIMITERS
@@ -287,7 +338,7 @@ fn analyse(lines: &[Candidate<'_>], start: usize, end: usize) -> Option<Table> {
             (Sep::Delimited(d), ranges_from_delimiters(&bounds, width))
         }
         None => {
-            let gaps = spaced_gaps(&content);
+            let gaps = spaced_gaps(&content, &rule_gaps);
             if gaps.is_empty() {
                 return None;
             }
@@ -577,5 +628,38 @@ mod tests {
         assert!(is_rule("| --- | --- |"));
         assert!(!is_rule("│ a │ b │"));
         assert!(!is_rule("--"), "too short to be a rule");
+    }
+
+    #[test]
+    fn split_welded_rule_splits_header_and_rule() {
+        let line = "   عنوان ۱         عنوان ۲                                                               ━━━━━━━━━━━━  ━━━━━━━━━━━━";
+        let split = split_welded_rule(line);
+        assert!(split.is_some());
+        let (head, rule) = split.unwrap();
+        assert_eq!(head, "   عنوان ۱         عنوان ۲");
+        assert_eq!(rule, "━━━━━━━━━━━━  ━━━━━━━━━━━━");
+        assert!(is_rule(&rule));
+
+        // Normal prose or code comments must not split
+        assert!(split_welded_rule("سلام دنیا").is_none());
+        assert!(split_welded_rule("let x = 1;        // ------------------").is_none());
+    }
+
+    #[test]
+    fn segmented_rule_guides_ragged_columns() {
+        // Here column 2 ends at col 16 and column 3 starts at col 18 in row 1, but starts
+        // at col 17 in row 2. The intersection of blanks is only 1 column wide, but the
+        // segmented rule line below confirms the boundary.
+        let text = concat!(
+            " پارامتر      شرح                                     نتیجه\n",
+            "━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━\n",
+            " Jc          توضیح کوتاه که به ستون بعد نزدیک شد     بله\n",
+            " Jmin        توضیح دیگر                              بله\n",
+        );
+        let t = only(text);
+        assert_eq!(t.columns, 3);
+        assert_eq!(t.rows[0].cells[0], "پارامتر");
+        assert_eq!(t.rows[0].cells[1], "شرح");
+        assert_eq!(t.rows[0].cells[2], "نتیجه");
     }
 }
